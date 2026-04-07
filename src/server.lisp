@@ -108,7 +108,7 @@ Powered by CrafterBin (Common Lisp)
 ;;; ============================================================
 
 (defun handle-upload ()
-  "Handle POST to / — file upload or URL fetch."
+  "Handle POST to / - file upload or URL fetch."
   (let* ((file-param (hunchentoot:post-parameter "file"))
          (url-param (hunchentoot:post-parameter "url"))
          (secret-param (hunchentoot:post-parameter "secret"))
@@ -163,7 +163,7 @@ Powered by CrafterBin (Common Lisp)
        (format nil "Error: no file or URL provided~%")))))
 
 (defun handle-manage (id)
-  "Handle POST to /<id> — delete or update expiry."
+  "Handle POST to /<id> - delete or update expiry."
   (let* ((token (hunchentoot:post-parameter "token"))
          (delete-param (hunchentoot:post-parameter "delete"))
          (expires-param (hunchentoot:post-parameter "expires"))
@@ -198,7 +198,7 @@ Powered by CrafterBin (Common Lisp)
        (format nil "No action specified (use 'delete' or 'expires')~%")))))
 
 (defun handle-download (id)
-  "Handle GET to /<id> — serve the file."
+  "Handle GET to /<id> - serve the file."
   (let ((entry (lookup-entry id)))
     (cond
       ((null entry)

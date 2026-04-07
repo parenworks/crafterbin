@@ -81,7 +81,7 @@
   (multiple-value-bind (options) (opts:get-opts)
     (when (getf options :help)
       (opts:describe
-       :prefix "CrafterBin — temporary file sharing service"
+       :prefix "CrafterBin - temporary file sharing service"
        :args "[options]")
       (sb-ext:exit :code 0))
     (let ((cfg (make-default-config)))

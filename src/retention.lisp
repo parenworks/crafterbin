@@ -30,7 +30,7 @@ Otherwise, use the retention curve based on FILE-SIZE."
          (curve-retention (compute-retention file-size))
          (curve-expiry (+ now curve-retention)))
     (cond
-      ;; No explicit expiry — use the curve
+      ;; No explicit expiry - use the curve
       ((null expires)
        curve-expiry)
       ;; Explicit expiry as hours (small numbers, < 1e9)

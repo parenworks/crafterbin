@@ -5,17 +5,17 @@ A temporary file sharing service written in Common Lisp. Inspired by [0x0.st](ht
 ## Features
 
 - **File upload** via `curl` / HTTP POST (multipart/form-data)
-- **URL fetch** — store a remote file by URL
-- **Secret URLs** — longer, hard-to-guess IDs
-- **Configurable expiry** — per-upload or via retention curve
-- **Size-based retention curve** — small files live longer, large files expire sooner
-- **Management tokens** — delete files or update expiry via `X-Token` header
-- **Background cleanup** — periodic sweep removes expired files
-- **Custom filenames** — append `/filename.ext` to any URL
+- **URL fetch** - store a remote file by URL
+- **Secret URLs** - longer, hard-to-guess IDs
+- **Configurable expiry** - per-upload or via retention curve
+- **Size-based retention curve** - small files live longer, large files expire sooner
+- **Management tokens** - delete files or update expiry via `X-Token` header
+- **Background cleanup** - periodic sweep removes expired files
+- **Custom filenames** - append `/filename.ext` to any URL
 
 ## Retention Curve
 
-```
+```text
 retention = min_age + (max_age - min_age) * (1 - file_size / max_size)^3
 ```
 
@@ -39,7 +39,7 @@ sudo make install
 
 ## CLI Options
 
-```
+```text
   -H, --host ADDR            Bind address (default: 127.0.0.1)
   -P, --port PORT            Listen port (default: 8080)
   -s, --storage DIR          Storage directory (default: /mnt/crafterbin/storage)

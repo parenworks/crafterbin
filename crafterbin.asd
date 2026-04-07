@@ -1,5 +1,5 @@
 (defsystem #:crafterbin
-  :description "CrafterBin — a temporary file sharing service"
+  :description "CrafterBin - a temporary file sharing service"
   :version "1.0.0"
   :author "Glenn Etherington"
   :license "MIT"
