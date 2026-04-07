@@ -214,16 +214,8 @@ Powered by CrafterBin (Common Lisp)
        (format nil "Expired~%"))
       (t
        (let ((path (file-data-path id)))
-         (setf (hunchentoot:content-type*) (entry-content-type entry))
          (setf (hunchentoot:header-out :content-disposition) "inline")
-         (setf (hunchentoot:header-out :content-length)
-               (princ-to-string (entry-size entry)))
-         (let ((out (hunchentoot:send-headers)))
-           (with-open-file (in path :element-type '(unsigned-byte 8))
-             (let ((buf (make-array 8192 :element-type '(unsigned-byte 8))))
-               (loop for n = (read-sequence buf in)
-                     while (> n 0)
-                     do (write-sequence buf out :end n))))))))))
+         (hunchentoot:handle-static-file path (entry-content-type entry)))))))
 
 ;;; ============================================================
 ;;; Dispatcher
