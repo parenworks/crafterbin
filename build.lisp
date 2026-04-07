@@ -5,4 +5,4 @@
 (sb-ext:save-lisp-and-die "crafterbin"
                           :toplevel #'crafterbin:main
                           :executable t
-                          :compression 9)
+                          :compression t)

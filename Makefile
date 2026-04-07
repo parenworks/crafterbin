@@ -18,7 +18,7 @@ all: build
 build: $(TARGET)
 
 $(TARGET): $(BUILD_SCRIPT) crafterbin.asd $(wildcard src/*.lisp)
-	$(SBCL) --dynamic-space-size 2048 --non-interactive --load $(BUILD_SCRIPT)
+	$(SBCL) --dynamic-space-size 1024 --non-interactive --load $(BUILD_SCRIPT)
 
 run: $(TARGET)
 	./$(TARGET) --host 127.0.0.1 --port 8080 --storage $(STORAGE_DIR)
