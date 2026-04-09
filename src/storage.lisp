@@ -115,6 +115,120 @@
         (error () nil)))))
 
 ;;; ============================================================
+;;; Content-type detection via magic bytes
+;;; ============================================================
+
+(defun detect-content-type-from-file (path)
+  "Read the first few bytes of PATH and return a MIME type string if
+   the magic bytes match a known format, or NIL otherwise."
+  (handler-case
+      (with-open-file (in path :element-type '(unsigned-byte 8))
+        (let ((header (make-array 12 :element-type '(unsigned-byte 8) :initial-element 0)))
+          (read-sequence header in)
+          (cond
+            ;; PNG: 89 50 4E 47 0D 0A 1A 0A
+            ((and (>= (length header) 8)
+                  (= (aref header 0) #x89)
+                  (= (aref header 1) #x50)   ; P
+                  (= (aref header 2) #x4E)   ; N
+                  (= (aref header 3) #x47))  ; G
+             "image/png")
+            ;; JPEG: FF D8 FF
+            ((and (>= (length header) 3)
+                  (= (aref header 0) #xFF)
+                  (= (aref header 1) #xD8)
+                  (= (aref header 2) #xFF))
+             "image/jpeg")
+            ;; GIF: 47 49 46 38
+            ((and (>= (length header) 4)
+                  (= (aref header 0) #x47)   ; G
+                  (= (aref header 1) #x49)   ; I
+                  (= (aref header 2) #x46)   ; F
+                  (= (aref header 3) #x38))  ; 8
+             "image/gif")
+            ;; WebP: RIFF....WEBP
+            ((and (>= (length header) 12)
+                  (= (aref header 0) #x52)   ; R
+                  (= (aref header 1) #x49)   ; I
+                  (= (aref header 2) #x46)   ; F
+                  (= (aref header 3) #x46)   ; F
+                  (= (aref header 8) #x57)   ; W
+                  (= (aref header 9) #x45)   ; E
+                  (= (aref header 10) #x42)  ; B
+                  (= (aref header 11) #x50)) ; P
+             "image/webp")
+            ;; BMP: 42 4D
+            ((and (>= (length header) 2)
+                  (= (aref header 0) #x42)
+                  (= (aref header 1) #x4D))
+             "image/bmp")
+            ;; PDF: 25 50 44 46
+            ((and (>= (length header) 4)
+                  (= (aref header 0) #x25)   ; %
+                  (= (aref header 1) #x50)   ; P
+                  (= (aref header 2) #x44)   ; D
+                  (= (aref header 3) #x46))  ; F
+             "application/pdf")
+            ;; ZIP (and derivatives): 50 4B 03 04
+            ((and (>= (length header) 4)
+                  (= (aref header 0) #x50)   ; P
+                  (= (aref header 1) #x4B)   ; K
+                  (= (aref header 2) #x03)
+                  (= (aref header 3) #x04))
+             "application/zip")
+            ;; GZIP: 1F 8B
+            ((and (>= (length header) 2)
+                  (= (aref header 0) #x1F)
+                  (= (aref header 1) #x8B))
+             "application/gzip")
+            ;; MP3: FF FB, FF F3, FF F2 or ID3
+            ((or (and (>= (length header) 2)
+                      (= (aref header 0) #xFF)
+                      (member (aref header 1) '(#xFB #xF3 #xF2)))
+                 (and (>= (length header) 3)
+                      (= (aref header 0) #x49)   ; I
+                      (= (aref header 1) #x44)   ; D
+                      (= (aref header 2) #x33)))  ; 3
+             "audio/mpeg")
+            ;; OGG: 4F 67 67 53
+            ((and (>= (length header) 4)
+                  (= (aref header 0) #x4F)   ; O
+                  (= (aref header 1) #x67)   ; g
+                  (= (aref header 2) #x67)   ; g
+                  (= (aref header 3) #x53))  ; S
+             "audio/ogg")
+            ;; FLAC: 66 4C 61 43
+            ((and (>= (length header) 4)
+                  (= (aref header 0) #x66)   ; f
+                  (= (aref header 1) #x4C)   ; L
+                  (= (aref header 2) #x61)   ; a
+                  (= (aref header 3) #x43))  ; C
+             "audio/flac")
+            ;; WAV: RIFF....WAVE
+            ((and (>= (length header) 12)
+                  (= (aref header 0) #x52)   ; R
+                  (= (aref header 1) #x49)   ; I
+                  (= (aref header 2) #x46)   ; F
+                  (= (aref header 3) #x46)   ; F
+                  (= (aref header 8) #x57)   ; W
+                  (= (aref header 9) #x41)   ; A
+                  (= (aref header 10) #x56)  ; V
+                  (= (aref header 11) #x45)) ; E
+             "audio/wav")
+            ;; No match
+            (t nil))))
+    (error () nil)))
+
+(defun refine-content-type (declared-type file-path)
+  "If DECLARED-TYPE is generic (text/plain, application/octet-stream),
+   try to detect the real type from the file's magic bytes."
+  (if (member declared-type '("text/plain" "application/octet-stream")
+              :test #'string-equal)
+      (or (detect-content-type-from-file file-path)
+          declared-type)
+      declared-type))
+
+;;; ============================================================
 ;;; Storage operations
 ;;; ============================================================
 
@@ -168,6 +282,10 @@
     (let ((actual-size (with-open-file (f data-path :element-type '(unsigned-byte 8)) (file-length f))))
       (when actual-size
         (setf (entry-size entry) actual-size)))
+    ;; Refine content-type from magic bytes if the declared type is generic
+    (let ((refined (refine-content-type (entry-content-type entry) data-path)))
+      (unless (string-equal refined (entry-content-type entry))
+        (setf (entry-content-type entry) refined)))
     ;; Write metadata
     (serialize-meta entry)
     entry))
