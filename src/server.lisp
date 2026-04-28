@@ -116,6 +116,13 @@ Powered by CrafterBin (Common Lisp)
          (secret-p (not (null secret-param)))
          (expires (when (and expires-param (plusp (length expires-param)))
                    (parse-integer expires-param :junk-allowed t))))
+    ;; Rate limit check
+    (unless (check-rate-limit (client-ip))
+      (setf (hunchentoot:return-code*) 429)
+      (setf (hunchentoot:content-type*) "text/plain; charset=utf-8")
+      (return-from handle-upload
+        (format nil "Error: rate limit exceeded (max ~D uploads per ~D minutes)~%"
+                *max-requests* (floor *window-seconds* 60))))
     (cond
       ;; File upload
       ((and file-param (listp file-param))

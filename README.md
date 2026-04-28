@@ -10,6 +10,8 @@ A temporary file sharing service written in Common Lisp. Inspired by [0x0.st](ht
 - **Configurable expiry** - per-upload or via retention curve
 - **Size-based retention curve** - small files live longer, large files expire sooner
 - **Management tokens** - delete files or update expiry via `X-Token` header
+- **ClamAV virus scanning** - uploads are scanned for malware before storage
+- **Rate limiting** - per-IP upload throttling (10 uploads per 15 minutes)
 - **Background cleanup** - periodic sweep removes expired files
 - **Custom filenames** - append `/filename.ext` to any URL
 
@@ -99,6 +101,18 @@ WantedBy=multi-user.target
 - SBCL
 - Quicklisp
 - Libraries: hunchentoot, ironclad, bordeaux-threads, unix-opts, drakma, trivial-mimes, babel, alexandria, local-time, jzon
+- **ClamAV** (`clamav-daemon`) - required for virus scanning uploads
+
+### ClamAV Setup (Debian/Ubuntu)
+
+```bash
+sudo apt install clamav clamav-daemon
+sudo systemctl stop clamav-freshclam
+sudo freshclam
+sudo systemctl start clamav-freshclam
+sudo systemctl enable clamav-daemon
+sudo systemctl start clamav-daemon
+```
 
 ## License
 

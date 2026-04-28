@@ -26,6 +26,9 @@
         do (handler-case (run-cleanup)
              (error (e)
                (format *error-output* "~&[cleanup] Sweep error: ~A~%" e)))
+           (handler-case (sweep-expired-records)
+             (error (e)
+               (format *error-output* "~&[cleanup] Rate-limit sweep error: ~A~%" e)))
            (sleep (config-cleanup-interval *config*))))
 
 (defun start-cleanup-thread ()

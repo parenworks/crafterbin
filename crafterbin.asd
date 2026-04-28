@@ -21,6 +21,7 @@
                              (:file "storage")
                              (:file "retention")
                              (:file "scan")
+                             (:file "rate-limit")
                              (:file "cleanup")
                              (:file "server")
                              (:file "main")))))

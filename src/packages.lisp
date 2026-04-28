@@ -51,14 +51,23 @@
            #:virus-signature
            #:*clamdscan-path*))
 
+(defpackage #:crafterbin/rate-limit
+  (:use #:cl)
+  (:nicknames #:crafterbin/rl)
+  (:export #:check-rate-limit
+           #:rate-limit-remaining
+           #:sweep-expired-records
+           #:*window-seconds*
+           #:*max-requests*))
+
 (defpackage #:crafterbin/cleanup
-  (:use #:cl #:crafterbin/config #:crafterbin/storage)
+  (:use #:cl #:crafterbin/config #:crafterbin/storage #:crafterbin/rate-limit)
   (:export #:start-cleanup-thread
            #:stop-cleanup-thread))
 
 (defpackage #:crafterbin/server
   (:use #:cl #:crafterbin/config #:crafterbin/storage
-        #:crafterbin/retention #:crafterbin/scan)
+        #:crafterbin/retention #:crafterbin/scan #:crafterbin/rate-limit)
   (:export #:start-server
            #:stop-server
            #:format-size))
