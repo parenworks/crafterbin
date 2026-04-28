@@ -127,6 +127,12 @@ Powered by CrafterBin (Common Lisp)
              (return-from handle-upload
                (format nil "Error: file too large (~A, max ~A)~%"
                        (format-size size) (format-size (config-max-size *config*)))))
+           ;; ClamAV scan
+           (handler-case (scan-file tmp-path)
+             (virus-detected (v)
+               (setf (hunchentoot:return-code*) 403)
+               (return-from handle-upload
+                 (format nil "Error: virus detected (~A)~%" (virus-signature v)))))
            (let* ((expiry (compute-expiry-time size :expires expires))
                   (entry (with-open-file (in tmp-path :element-type '(unsigned-byte 8))
                            (store-upload in original-name content-type size expiry
@@ -146,6 +152,13 @@ Powered by CrafterBin (Common Lisp)
                                          :ip (client-ip)
                                          :user-agent (client-ua)
                                          :secret-p secret-p)))
+             ;; ClamAV scan the stored file
+             (handler-case (scan-file (file-data-path (entry-id entry)))
+               (virus-detected (v)
+                 (delete-entry (entry-id entry))
+                 (setf (hunchentoot:return-code*) 403)
+                 (return-from handle-upload
+                   (format nil "Error: virus detected (~A)~%" (virus-signature v)))))
              ;; Recompute expiry with actual size
              (let ((real-expiry (compute-expiry-time (entry-size entry) :expires expires)))
                (unless (= real-expiry (entry-expires-at entry))

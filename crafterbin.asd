@@ -20,6 +20,7 @@
                              (:file "config")
                              (:file "storage")
                              (:file "retention")
+                             (:file "scan")
                              (:file "cleanup")
                              (:file "server")
                              (:file "main")))))

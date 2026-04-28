@@ -44,6 +44,13 @@
   (:export #:compute-retention
            #:compute-expiry-time))
 
+(defpackage #:crafterbin/scan
+  (:use #:cl)
+  (:export #:scan-file
+           #:virus-detected
+           #:virus-signature
+           #:*clamdscan-path*))
+
 (defpackage #:crafterbin/cleanup
   (:use #:cl #:crafterbin/config #:crafterbin/storage)
   (:export #:start-cleanup-thread
@@ -51,7 +58,7 @@
 
 (defpackage #:crafterbin/server
   (:use #:cl #:crafterbin/config #:crafterbin/storage
-        #:crafterbin/retention)
+        #:crafterbin/retention #:crafterbin/scan)
   (:export #:start-server
            #:stop-server
            #:format-size))
