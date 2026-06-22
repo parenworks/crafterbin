@@ -103,6 +103,219 @@ Powered by CrafterBin (Common Lisp)
           (or (config-base-url *config*) "THIS_URL")
           (or (config-base-url *config*) "THIS_URL")))
 
+(defun wants-html-p ()
+  "Return T when the requesting client (a browser) prefers an HTML response."
+  (let ((accept (hunchentoot:header-in* :accept)))
+    (and accept (search "text/html" accept :test #'char-equal) t)))
+
+(defun landing-page-html ()
+  "Generate the styled HTML landing page for browsers."
+  (let ((base (or (config-base-url *config*) "https://crafterbin.glennstack.dev")))
+    (format nil "<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+<meta charset=\"utf-8\">
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+<title>Crafterbin</title>
+<style>
+  :root {
+    --bg: #292d3e;
+    --panel: #232635;
+    --panel-2: #2b2f44;
+    --border: #3a3f58;
+    --text: #eeffff;
+    --muted: #a6accd;
+    --accent: #c3e88d;
+    --accent-2: #82aaff;
+    --orange: #f78c6c;
+    --code-bg: #1c1f26;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
+  header.hero {
+    background:
+      radial-gradient(900px 400px at 15% -10%, rgba(195,232,141,0.12), transparent 60%),
+      radial-gradient(800px 400px at 85% -20%, rgba(130,170,255,0.16), transparent 55%),
+      linear-gradient(180deg, #2f3450, var(--bg));
+    border-bottom: 1px solid var(--border);
+    padding: 64px 24px 56px;
+    text-align: center;
+  }
+  .brand {
+    display: inline-flex; align-items: center; gap: 14px;
+    margin: 0 auto;
+  }
+  .logo {
+    width: 52px; height: 52px; border-radius: 14px;
+    display: grid; place-items: center;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #1c1f26; font-weight: 800; font-size: 26px;
+    box-shadow: 0 10px 30px rgba(195,232,141,0.22);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(2.4rem, 6vw, 3.4rem);
+    letter-spacing: -0.02em;
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .tagline { margin: 14px 0 0; color: var(--muted); font-size: 1.1rem; }
+  .stats {
+    display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+    margin-top: 28px;
+  }
+  .stat {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 12px 18px; min-width: 120px;
+  }
+  .stat .k { display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+  .stat .v { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+  section { margin-top: 44px; }
+  h2 {
+    font-size: 1.3rem; margin: 0 0 16px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  p { color: var(--muted); }
+  .formula {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 18px; color: var(--accent);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.92rem; overflow-x: auto;
+  }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  th { color: var(--accent); font-weight: 600; }
+  td:first-child { font-family: ui-monospace, monospace; color: var(--accent-2); white-space: nowrap; }
+  td { color: var(--muted); vertical-align: top; }
+  .cmd {
+    position: relative;
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px; margin: 14px 0;
+    overflow-x: auto;
+  }
+  .cmd .label {
+    display: block; color: var(--muted); font-size: 0.78rem;
+    text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px;
+  }
+  .copy-btn {
+    position: absolute; top: 12px; right: 12px;
+    background: var(--panel); color: var(--muted);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 5px 12px; font-size: 0.74rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    cursor: pointer; transition: all 0.15s ease;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+  .copy-btn.copied { color: #1c1f26; background: var(--accent); border-color: var(--accent); }
+  .cmd pre {
+    margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.92rem; color: var(--text); white-space: pre;
+  }
+  .cmd .tok-cmd { color: var(--accent); }
+  .cmd .tok-flag { color: var(--accent-2); }
+  .cmd .tok-url { color: var(--orange); }
+  footer {
+    margin-top: 56px; padding-top: 24px; border-top: 1px solid var(--border);
+    color: var(--muted); font-size: 0.88rem; text-align: center;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<header class=\"hero\">
+  <div class=\"brand\">
+    <div class=\"logo\">CB</div>
+    <h1>Crafterbin</h1>
+  </div>
+  <p class=\"tagline\">Temporary file sharing service.</p>
+  <div class=\"stats\">
+    <div class=\"stat\"><span class=\"k\">Min age</span><span class=\"v\">~D days</span></div>
+    <div class=\"stat\"><span class=\"k\">Max age</span><span class=\"v\">~D days</span></div>
+    <div class=\"stat\"><span class=\"k\">Max size</span><span class=\"v\">~A</span></div>
+  </div>
+</header>
+
+<div class=\"wrap\">
+  <section>
+    <h2>Retention</h2>
+    <p>Small files live longer, large files expire sooner. Lifetime is computed from this curve:</p>
+    <div class=\"formula\">retention = min_age + (max_age - min_age) * pow((1 - file_size / max_size), 3)</div>
+  </section>
+
+  <section>
+    <h2>Uploading files</h2>
+    <p>Send HTTP POST requests with data encoded as <code>multipart/form-data</code>.</p>
+    <table>
+      <thead><tr><th>Field</th><th>Content</th><th>Remarks</th></tr></thead>
+      <tbody>
+        <tr><td>file</td><td>data</td><td></td></tr>
+        <tr><td>url</td><td>remote URL</td><td>Mutually exclusive with &quot;file&quot;.</td></tr>
+        <tr><td>secret</td><td>(ignored)</td><td>If present, generates a longer, hard-to-guess URL.</td></tr>
+        <tr><td>expires</td><td>hours or ms epoch</td><td>Maximum lifetime in hours, or expiration as milliseconds since UNIX epoch.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>cURL examples</h2>
+    <div class=\"cmd\"><span class=\"label\">Upload a file</span><button class=\"copy-btn\" type=\"button\">Copy</button><pre><span class=\"tok-cmd\">curl</span> <span class=\"tok-flag\">-F</span>'file=@yourfile.png' <span class=\"tok-url\">~A</span></pre></div>
+    <div class=\"cmd\"><span class=\"label\">Copy from URL</span><button class=\"copy-btn\" type=\"button\">Copy</button><pre><span class=\"tok-cmd\">curl</span> <span class=\"tok-flag\">-F</span>'url=http://example.com/image.jpg' <span class=\"tok-url\">~A</span></pre></div>
+    <div class=\"cmd\"><span class=\"label\">Secret URL</span><button class=\"copy-btn\" type=\"button\">Copy</button><pre><span class=\"tok-cmd\">curl</span> <span class=\"tok-flag\">-F</span>'file=@yourfile.png' <span class=\"tok-flag\">-Fsecret=</span> <span class=\"tok-url\">~A</span></pre></div>
+    <div class=\"cmd\"><span class=\"label\">Set expiry (24 hours)</span><button class=\"copy-btn\" type=\"button\">Copy</button><pre><span class=\"tok-cmd\">curl</span> <span class=\"tok-flag\">-F</span>'file=@yourfile.png' <span class=\"tok-flag\">-Fexpires=24</span> <span class=\"tok-url\">~A</span></pre></div>
+  </section>
+
+  <section>
+    <h2>Managing files</h2>
+    <p>The <code>X-Token</code> response header contains a management token. Use <code>-i</code> with cURL to see it.</p>
+    <div class=\"cmd\"><span class=\"label\">Delete a file</span><button class=\"copy-btn\" type=\"button\">Copy</button><pre><span class=\"tok-cmd\">curl</span> <span class=\"tok-flag\">-Ftoken=TOKEN</span> <span class=\"tok-flag\">-Fdelete=</span> <span class=\"tok-url\">~A/ID</span></pre></div>
+    <div class=\"cmd\"><span class=\"label\">Update expiry</span><button class=\"copy-btn\" type=\"button\">Copy</button><pre><span class=\"tok-cmd\">curl</span> <span class=\"tok-flag\">-Ftoken=TOKEN</span> <span class=\"tok-flag\">-Fexpires=72</span> <span class=\"tok-url\">~A/ID</span></pre></div>
+  </section>
+
+  <footer>Powered by CrafterBin &middot; built with <a href=\"https://common-lisp.net/\">Common Lisp</a></footer>
+</div>
+<script>
+  document.querySelectorAll('.copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var pre = btn.parentElement.querySelector('pre');
+      var text = pre.innerText.trim();
+      var done = function () {
+        var original = btn.textContent;
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+        setTimeout(function () {
+          btn.textContent = original;
+          btn.classList.remove('copied');
+        }, 1500);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () {});
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); done(); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+    });
+  });
+</script>
+</body>
+</html>
+"
+            (floor (config-min-age *config*) (* 24 3600))
+            (floor (config-max-age *config*) (* 24 3600))
+            (format-size (config-max-size *config*))
+            base base base base base base)))
+
 ;;; ============================================================
 ;;; Handlers
 ;;; ============================================================
@@ -258,8 +471,13 @@ Powered by CrafterBin (Common Lisp)
       ((or (string= path "") (string= path "/"))
        (case method
          (:get
-          (setf (hunchentoot:content-type*) "text/plain; charset=utf-8")
-          (landing-page))
+          (if (wants-html-p)
+              (progn
+                (setf (hunchentoot:content-type*) "text/html; charset=utf-8")
+                (landing-page-html))
+              (progn
+                (setf (hunchentoot:content-type*) "text/plain; charset=utf-8")
+                (landing-page))))
          (:post
           (handle-upload))
          (t
