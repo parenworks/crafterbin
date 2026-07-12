@@ -317,11 +317,249 @@ Powered by CrafterBin (Common Lisp)
             base base base base base base)))
 
 ;;; ============================================================
+;;; Upload page (hidden UI)
+;;; ============================================================
+
+(defun upload-page-css ()
+  "Return shared CSS for upload pages, matching the site theme."
+  ":root {
+    --bg: #292d3e;
+    --panel: #232635;
+    --panel-2: #2b2f44;
+    --border: #3a3f58;
+    --text: #eeffff;
+    --muted: #a6accd;
+    --accent: #c3e88d;
+    --accent-2: #82aaff;
+    --orange: #f78c6c;
+    --code-bg: #1c1f26;
+    --danger: #f07178;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 600px; margin: 0 auto; padding: 24px; }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 32px 24px 24px;
+    text-align: center;
+  }
+  header a { color: var(--accent); text-decoration: none; font-size: 1.5rem; font-weight: 700; }
+  .field { margin-bottom: 20px; }
+  label { display: block; margin-bottom: 6px; color: var(--muted); font-size: 0.9rem; }
+  input[type=\"file\"] {
+    width: 100%; padding: 12px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); font-size: 0.95rem;
+  }
+  input[type=\"text\"], input[type=\"number\"] {
+    width: 100%; padding: 12px; background: var(--panel);
+    border: 1px solid var(--border); border-radius: 10px;
+    color: var(--text); font-size: 0.95rem; outline: none;
+  }
+  input:focus { border-color: var(--accent-2); }
+  .checkbox-row { display: flex; align-items: center; gap: 10px; }
+  input[type=\"checkbox\"] { width: 18px; height: 18px; accent-color: var(--accent); }
+  .hint { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+  .btn {
+    display: block; width: 100%; padding: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    color: #1c1f26; border: none; border-radius: 10px;
+    font-size: 1rem; font-weight: 700; cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+  .btn:hover { opacity: 0.9; }
+  .result-box {
+    background: var(--code-bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px; margin: 16px 0;
+    position: relative; word-break: break-all;
+    font-family: ui-monospace, monospace; font-size: 0.92rem;
+    color: var(--accent);
+  }
+  .copy-btn {
+    position: absolute; top: 12px; right: 12px;
+    background: var(--panel); color: var(--muted);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 5px 12px; font-size: 0.74rem; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    cursor: pointer; transition: all 0.15s ease;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+  .copy-btn.copied { color: #1c1f26; background: var(--accent); border-color: var(--accent); }
+  .token-box {
+    background: var(--panel-2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px; margin: 16px 0;
+  }
+  .token-box code {
+    font-family: ui-monospace, monospace; color: var(--orange);
+    font-size: 0.85rem; word-break: break-all;
+  }
+  .error-msg {
+    background: rgba(240,113,120,0.1); border: 1px solid var(--danger);
+    border-radius: 10px; padding: 16px; color: var(--danger);
+    margin: 16px 0;
+  }
+  .actions { display: flex; gap: 12px; margin-top: 24px; }
+  .actions a {
+    flex: 1; text-align: center; padding: 12px;
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); text-decoration: none;
+    font-size: 0.9rem; transition: all 0.15s ease;
+  }
+  .actions a:hover { border-color: var(--accent); color: var(--accent); }
+  .or-divider {
+    text-align: center; color: var(--muted); margin: 20px 0;
+    font-size: 0.85rem; position: relative;
+  }
+  .or-divider::before, .or-divider::after {
+    content: ''; position: absolute; top: 50%; width: 40%;
+    height: 1px; background: var(--border);
+  }
+  .or-divider::before { left: 0; }
+  .or-divider::after { right: 0; }")
+
+(defun upload-page-html ()
+  "Generate the HTML upload form page."
+  (let ((base (or (config-base-url *config*) "/")))
+    (format nil "<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+<meta charset=\"utf-8\">
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+<title>Crafterbin - Upload</title>
+<style>
+~A</style>
+</head>
+<body>
+<header><a href=\"~A\">Crafterbin</a></header>
+<div class=\"wrap\">
+  <form action=\"/upload\" method=\"POST\" enctype=\"multipart/form-data\">
+    <div class=\"field\">
+      <label for=\"file\">File</label>
+      <input type=\"file\" name=\"file\" id=\"file\">
+    </div>
+    <div class=\"or-divider\">or paste a URL</div>
+    <div class=\"field\">
+      <label for=\"url\">Remote URL</label>
+      <input type=\"text\" name=\"url\" id=\"url\" placeholder=\"https://example.com/image.png\">
+    </div>
+    <div class=\"field\">
+      <label for=\"expires\">Expiry (hours, optional)</label>
+      <input type=\"number\" name=\"expires\" id=\"expires\" min=\"1\" placeholder=\"e.g. 24\">
+    </div>
+    <div class=\"field\">
+      <div class=\"checkbox-row\">
+        <input type=\"checkbox\" name=\"secret\" id=\"secret\" value=\"1\">
+        <label for=\"secret\" style=\"margin:0\">Secret URL (longer, harder to guess)</label>
+      </div>
+    </div>
+    <button type=\"submit\" class=\"btn\">Upload</button>
+  </form>
+</div>
+</body>
+</html>"
+            (upload-page-css)
+            base)))
+
+(defun upload-result-html (url token)
+  "Generate the HTML result page after a successful upload."
+  (format nil "<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+<meta charset=\"utf-8\">
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+<title>Crafterbin - Uploaded</title>
+<style>
+~A</style>
+</head>
+<body>
+<header><a href=\"/upload\">Crafterbin</a></header>
+<div class=\"wrap\">
+  <h2 style=\"color:var(--accent)\">Upload successful</h2>
+  <p>Your file is available at:</p>
+  <div class=\"result-box\">
+    <button class=\"copy-btn\" type=\"button\" onclick=\"copyUrl()\">Copy</button>
+    <span id=\"url-text\">~A</span>
+  </div>
+  <div class=\"token-box\">
+    <strong style=\"color:var(--muted)\">Management token</strong><br>
+    <code>~A</code>
+    <p class=\"hint\">Save this token to delete the file or change its expiry later.</p>
+  </div>
+  <div class=\"actions\">
+    <a href=\"~A\" target=\"_blank\">View file</a>
+    <a href=\"/upload\">Upload another</a>
+  </div>
+</div>
+<script>
+  function copyUrl() {
+    var text = document.getElementById('url-text').textContent;
+    var btn = document.querySelector('.copy-btn');
+    var done = function() {
+      btn.textContent = 'Copied';
+      btn.classList.add('copied');
+      setTimeout(function() {
+        btn.textContent = 'Copy';
+        btn.classList.remove('copied');
+      }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function() {});
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+  }
+</script>
+</body>
+</html>"
+            (upload-page-css)
+            url
+            token
+            url))
+
+(defun upload-error-html (message)
+  "Generate the HTML error page for a failed upload."
+  (format nil "<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+<meta charset=\"utf-8\">
+<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
+<title>Crafterbin - Error</title>
+<style>
+~A</style>
+</head>
+<body>
+<header><a href=\"/upload\">Crafterbin</a></header>
+<div class=\"wrap\">
+  <h2 style=\"color:var(--danger)\">Upload failed</h2>
+  <div class=\"error-msg\">~A</div>
+  <div class=\"actions\">
+    <a href=\"/upload\">Try again</a>
+  </div>
+</div>
+</body>
+</html>"
+            (upload-page-css)
+            message))
+
+;;; ============================================================
 ;;; Handlers
 ;;; ============================================================
 
-(defun handle-upload ()
-  "Handle POST to / - file upload or URL fetch."
+(defun perform-upload ()
+  "Core upload logic shared by handle-upload and handle-upload-ui.
+   Returns (values :ok url token) on success,
+   or (values :error message code) on failure."
   (let* ((file-param (hunchentoot:post-parameter "file"))
          (url-param (hunchentoot:post-parameter "url"))
          (secret-param (hunchentoot:post-parameter "secret"))
@@ -331,11 +569,11 @@ Powered by CrafterBin (Common Lisp)
                    (parse-integer expires-param :junk-allowed t))))
     ;; Rate limit check
     (unless (check-rate-limit (client-ip))
-      (setf (hunchentoot:return-code*) 429)
-      (setf (hunchentoot:content-type*) "text/plain; charset=utf-8")
-      (return-from handle-upload
-        (format nil "Error: rate limit exceeded (max ~D uploads per ~D minutes)~%"
-                *max-requests* (floor *window-seconds* 60))))
+      (return-from perform-upload
+        (values :error
+                (format nil "Rate limit exceeded (max ~D uploads per ~D minutes)"
+                        *max-requests* (floor *window-seconds* 60))
+                429)))
     (cond
       ;; File upload
       ((and file-param (listp file-param))
@@ -343,26 +581,25 @@ Powered by CrafterBin (Common Lisp)
          (let ((size (with-open-file (f tmp-path) (file-length f))))
            ;; Size check
            (when (> size (config-max-size *config*))
-             (setf (hunchentoot:return-code*) 413)
-             (return-from handle-upload
-               (format nil "Error: file too large (~A, max ~A)~%"
-                       (format-size size) (format-size (config-max-size *config*)))))
+             (return-from perform-upload
+               (values :error
+                       (format nil "File too large (~A, max ~A)"
+                               (format-size size) (format-size (config-max-size *config*)))
+                       413)))
            ;; ClamAV scan
            (handler-case (scan-file tmp-path)
              (virus-detected (v)
-               (setf (hunchentoot:return-code*) 403)
-               (return-from handle-upload
-                 (format nil "Error: virus detected (~A)~%" (virus-signature v)))))
+               (return-from perform-upload
+                 (values :error
+                         (format nil "Virus detected (~A)" (virus-signature v))
+                         403))))
            (let* ((expiry (compute-expiry-time size :expires expires))
                   (entry (with-open-file (in tmp-path :element-type '(unsigned-byte 8))
                            (store-upload in original-name content-type size expiry
                                          :ip (client-ip)
                                          :user-agent (client-ua)
                                          :secret-p secret-p))))
-             ;; Set management token header
-             (setf (hunchentoot:header-out :x-token) (entry-token entry))
-             (setf (hunchentoot:content-type*) "text/plain; charset=utf-8")
-             (format nil "~A~%" (file-url entry))))))
+             (values :ok (file-url entry) (entry-token entry))))))
 
       ;; URL fetch
       ((and url-param (plusp (length url-param)))
@@ -376,24 +613,44 @@ Powered by CrafterBin (Common Lisp)
              (handler-case (scan-file (file-data-path (entry-id entry)))
                (virus-detected (v)
                  (delete-entry (entry-id entry))
-                 (setf (hunchentoot:return-code*) 403)
-                 (return-from handle-upload
-                   (format nil "Error: virus detected (~A)~%" (virus-signature v)))))
+                 (return-from perform-upload
+                   (values :error
+                           (format nil "Virus detected (~A)" (virus-signature v))
+                           403))))
              ;; Recompute expiry with actual size
              (let ((real-expiry (compute-expiry-time (entry-size entry) :expires expires)))
                (unless (= real-expiry (entry-expires-at entry))
                  (update-entry-expiry (entry-id entry) real-expiry)))
-             (setf (hunchentoot:header-out :x-token) (entry-token entry))
-             (setf (hunchentoot:content-type*) "text/plain; charset=utf-8")
-             (format nil "~A~%" (file-url entry)))
+             (values :ok (file-url entry) (entry-token entry)))
          (error (e)
-           (setf (hunchentoot:return-code*) 400)
-           (format nil "Error fetching URL: ~A~%" e))))
+           (values :error (format nil "Error fetching URL: ~A" e) 400))))
 
       ;; Nothing provided
       (t
-       (setf (hunchentoot:return-code*) 400)
-       (format nil "Error: no file or URL provided~%")))))
+       (values :error "No file or URL provided" 400)))))
+
+(defun handle-upload ()
+  "Handle POST to / - file upload or URL fetch (plain text response)."
+  (multiple-value-bind (status data info) (perform-upload)
+    (setf (hunchentoot:content-type*) "text/plain; charset=utf-8")
+    (case status
+      (:ok
+       (setf (hunchentoot:header-out :x-token) info)
+       (format nil "~A~%" data))
+      (:error
+       (setf (hunchentoot:return-code*) info)
+       (format nil "Error: ~A~%" data)))))
+
+(defun handle-upload-ui ()
+  "Handle POST to /upload - file upload with HTML response."
+  (multiple-value-bind (status data info) (perform-upload)
+    (setf (hunchentoot:content-type*) "text/html; charset=utf-8")
+    (case status
+      (:ok
+       (upload-result-html data info))
+      (:error
+       (setf (hunchentoot:return-code*) info)
+       (upload-error-html data)))))
 
 (defun handle-manage (id)
   "Handle POST to /<id> - delete or update expiry."
@@ -480,6 +737,18 @@ Powered by CrafterBin (Common Lisp)
                 (landing-page))))
          (:post
           (handle-upload))
+         (t
+          (setf (hunchentoot:return-code*) 405)
+          "Method not allowed")))
+
+      ;; Upload UI
+      ((string= path "upload")
+       (case method
+         (:get
+          (setf (hunchentoot:content-type*) "text/html; charset=utf-8")
+          (upload-page-html))
+         (:post
+          (handle-upload-ui))
          (t
           (setf (hunchentoot:return-code*) 405)
           "Method not allowed")))
